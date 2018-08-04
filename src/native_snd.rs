@@ -6,6 +6,7 @@ use cpal;
 use uni_app::App;
 use super::{SoundError,SoundGenerator};
 
+/// This is the sound API that allows you to send events to your generator.
 pub struct SoundDriver<T: Send + 'static> {
     event_loop: Option<cpal::EventLoop>,
     format: Option<cpal::Format>,
@@ -16,10 +17,12 @@ pub struct SoundDriver<T: Send + 'static> {
 }
 
 impl<T: Send + 'static> SoundDriver<T> {
+    /// After calling [`SoundDriver::new`], you can call this function to see if the audio initialization was a success.
     pub fn get_error(&self) -> SoundError {
         self.err
     }
 
+    /// Initialize the sound device and provide the generator to the driver.
     pub fn new(generator: Box<SoundGenerator<T>>) -> Self {
         let device = cpal::default_output_device();
         let mut event_loop = None;
@@ -66,6 +69,7 @@ impl<T: Send + 'static> SoundDriver<T> {
             err,
         }
     }
+    /// Send an event to the generator
     pub fn send_event(&mut self, event: T) {
         if let Some(ref mut tx) = self.tx {
             tx.send(event).unwrap();
@@ -78,7 +82,12 @@ impl<T: Send + 'static> SoundDriver<T> {
             1.0
         }
     }
+    /// This function should be called every frame.
+    /// It's only needed on web target to fill the output sound buffer.
     pub fn frame(&mut self) {}
+    /// This will call the generator init function.
+    /// On native target, it starts the sound thread and the audio loop.
+    /// On web target, only the [`SoundDriver::frame`] function produces sound.
     pub fn start(&mut self) {
         let (tx, rx) = channel();
         self.tx = Some(tx);
