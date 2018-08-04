@@ -2,7 +2,7 @@
 name = "uni-snd"
 version = "0.1.0"
 authors = ["jice <jice.nospam@gmail.com>"]
-description = "Unrust native/wasm compatibility layer for sound output"
+description = "Unrust low level native/wasm compatibility layer for sound output"
 license = "MIT"
 documentation = "https://docs.rs/uni-snd"
 repository = "https://github.com/unrust/uni-snd"

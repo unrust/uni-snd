@@ -5,17 +5,14 @@
 [![crates.io](https://meritbadge.herokuapp.com/uni-snd)](https://crates.io/crates/uni-snd)
 
 This library is a part of [Unrust](https://github.com/unrust/unrust), a pure rust native/wasm game engine.
-This library provides a native/wasm compatibility layer for following components :
+This library provides a low level native/wasm compatibility layer for following components :
 * Sound output
 
 **This project is under heavily development, all api are very unstable until version 0.2**
 
 ## Usage
 
-```toml
-[dependencies]
-uni-snd = "0.1.*"
-```
+See examples
 
 ## Build
 
