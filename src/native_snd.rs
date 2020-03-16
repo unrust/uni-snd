@@ -1,10 +1,11 @@
 use std;
-use std::thread;
 use std::sync::mpsc::{channel, Sender};
+use std::thread;
 
+use super::{SoundError, SoundGenerator};
 use cpal;
+use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
 use uni_app::App;
-use super::{SoundError,SoundGenerator};
 
 /// This is the sound API that allows you to send events to your generator.
 pub struct SoundDriver<T: Send + 'static> {
@@ -12,7 +13,7 @@ pub struct SoundDriver<T: Send + 'static> {
     format: Option<cpal::Format>,
     stream_id: Option<cpal::StreamId>,
     tx: Option<Sender<T>>,
-    generator: Option<Box<SoundGenerator<T>>>,
+    generator: Option<Box<dyn SoundGenerator<T>>>,
     err: SoundError,
 }
 
@@ -23,41 +24,42 @@ impl<T: Send + 'static> SoundDriver<T> {
     }
 
     /// Initialize the sound device and provide the generator to the driver.
-    pub fn new(generator: Box<SoundGenerator<T>>) -> Self {
-        let device = cpal::default_output_device();
+    pub fn new(generator: Box<dyn SoundGenerator<T>>) -> Self {
+        let host = cpal::default_host();
         let mut event_loop = None;
         let mut format = None;
         let mut stream_id = None;
-        let mut err=SoundError::NoError;
+        let mut err = SoundError::NoError;
+        let device = host.default_output_device();
         if let Some(ref dev) = device {
             match dev.default_output_format() {
                 Ok(fmt) => {
-                    let evt = cpal::EventLoop::new();
+                    let evt = host.event_loop();
                     match evt.build_output_stream(dev, &fmt) {
                         Ok(str) => stream_id = Some(str),
                         Err(e) => {
-                            err=SoundError::OutputStream;
+                            err = SoundError::OutputStream;
                             App::print(format!("error : could not build output stream : {}\n", e))
                         }
                     }
                     App::print(format!(
                         "sound device : {} format {:?}\n",
-                        dev.name(),
+                        dev.name().unwrap_or("?".to_owned()),
                         fmt.clone()
                     ));
                     format = Some(fmt);
                     event_loop = Some(evt);
                 }
                 Err(e) => {
-                    err=SoundError::UnknownStreamFormat;
+                    err = SoundError::UnknownStreamFormat;
                     App::print(format!(
-                        "error : could not get default output format : {:?}\n",
+                        "error : could not get default output configuration : {:?}\n",
                         e
                     ));
-                },
+                }
             }
         } else {
-            err=SoundError::NoDevice;
+            err = SoundError::NoDevice;
             App::print("warning : no sound device detected\n");
         }
         Self {
@@ -97,7 +99,7 @@ impl<T: Send + 'static> SoundDriver<T> {
         if let Some(evt) = self.event_loop.take() {
             thread::spawn(move || {
                 App::print("starting audio loop\n");
-                evt.play_stream(stream_id);
+                evt.play_stream(stream_id).ok();
                 generator.init(sample_rate);
                 evt.run(move |_stream_id, stream_data| {
                     for event in rx.try_iter() {
@@ -105,22 +107,29 @@ impl<T: Send + 'static> SoundDriver<T> {
                     }
 
                     match stream_data {
-                        cpal::StreamData::Output {
+                        Ok(cpal::StreamData::Output {
                             buffer: cpal::UnknownTypeOutputBuffer::U16(mut buffer),
-                        } => for elem in buffer.iter_mut() {
-                            *elem = ((generator.next_value() * 0.5 + 0.5) * std::u16::MAX as f32)
-                                as u16;
-                        },
-                        cpal::StreamData::Output {
+                        }) => {
+                            for elem in buffer.iter_mut() {
+                                *elem = ((generator.next_value() * 0.5 + 0.5)
+                                    * std::u16::MAX as f32)
+                                    as u16;
+                            }
+                        }
+                        Ok(cpal::StreamData::Output {
                             buffer: cpal::UnknownTypeOutputBuffer::I16(mut buffer),
-                        } => for elem in buffer.iter_mut() {
-                            *elem = (generator.next_value() * std::i16::MAX as f32) as i16;
-                        },
-                        cpal::StreamData::Output {
+                        }) => {
+                            for elem in buffer.iter_mut() {
+                                *elem = (generator.next_value() * std::i16::MAX as f32) as i16;
+                            }
+                        }
+                        Ok(cpal::StreamData::Output {
                             buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer),
-                        } => for elem in buffer.iter_mut() {
-                            *elem = generator.next_value();
-                        },
+                        }) => {
+                            for elem in buffer.iter_mut() {
+                                *elem = generator.next_value();
+                            }
+                        }
                         _ => panic!("unsupported stream data"),
                     }
                 })
