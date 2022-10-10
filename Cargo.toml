@@ -1,17 +1,21 @@
 [package]
 name = "uni-snd"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["jice <jice.nospam@gmail.com>"]
 description = "Unrust low level native/wasm compatibility layer for sound output"
 license = "MIT"
 documentation = "https://docs.rs/uni-snd"
 repository = "https://github.com/unrust/uni-snd"
 keywords = ["sound", "wasm"]
+edition="2021"
+exclude=["www"]
 
 [dependencies]
-uni-app="0.1.*"
-[target.wasm32-unknown-unknown.dependencies]
-stdweb =  "0.4.8"
+uni-app="0.2.*"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cpal="0.11"
+cpal={ version = "0.14"}
+
+[target.wasm32-unknown-unknown.dependencies]
+wasm-bindgen = "0.2.83"
+cpal={ version = "0.14", features = ["wasm-bindgen"]}

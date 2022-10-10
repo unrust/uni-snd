@@ -1,0 +1,15 @@
+[package]
+name = "uni-snd-example"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "oscillator.rs"
+
+[dependencies]
+uni-app = "0.2.*"
+uni-snd = {path = ".."}
+
+[target.wasm32-unknown-unknown.dependencies]
+wasm-bindgen = "0.2.83"

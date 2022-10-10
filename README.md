@@ -8,32 +8,40 @@ This library is a part of [Unrust](https://github.com/unrust/unrust), a pure rus
 This library provides a low level native/wasm compatibility layer for following components :
 * Sound output
 
-**This project is under heavily development, all api are very unstable until version 0.2**
-
 ## Usage
 
-See examples
+See oscillator example.
 
 ## Build
 
 ### As web app (wasm32-unknown-unknown)
 
-When targetting `wasm32-unknown-unknown`, stdweb currently requires Rust nightly.
-
+Install wasm32 target :
 ```
-cargo install --force cargo-web # installs web sub command
-rustup override set nightly
 rustup target install wasm32-unknown-unknown
-cargo web start --example basic --release
 ```
+Install [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
+and [npm](https://www.npmjs.com/get-npm)
+
+Compile the demo with
+```
+wasm-pack build examples
+```
+This creates a wasm package in examples/pkg
+
+Run the demo with
+```
+cd www
+npm install
+npm run start
+```
+
+Open your browser at http://localhost:8080/
 
 ### As desktop app (native-opengl)
 
-Native compilation works with current stable Rust (1.28)
-
 ```
-rustup override set stable
-cargo run --example basic --release
+cargo run --example oscillator --release
 ```
 
 ## License
