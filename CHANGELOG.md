@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.1] - Unreleased
+## [0.2.1] - 2022-10-11
 ### Fixed
 - events sent before calling start() were lost
 

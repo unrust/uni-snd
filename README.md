@@ -10,6 +10,8 @@ This library provides a low level native/wasm compatibility layer for following 
 
 ## Usage
 
+`uni-snd = "0.2.*"`
+
 See oscillator example.
 
 ## Build
