@@ -15,6 +15,8 @@ pub struct SoundDriver<T: Send + 'static> {
     format: Option<SampleFormat>,
     stream: Option<Stream>,
     err: SoundError,
+    // to store events sent before start() is called
+    event_buffer: Vec<T>,
 }
 
 impl<T: Send + 'static> SoundDriver<T> {
@@ -62,12 +64,15 @@ impl<T: Send + 'static> SoundDriver<T> {
             stream: None,
             generator: Some(generator),
             err,
+            event_buffer: Vec::new(),
         }
     }
     /// Send an event to the generator
     pub fn send_event(&mut self, event: T) {
         if let Some(ref mut tx) = self.tx {
             tx.send(event).unwrap();
+        } else {
+            self.event_buffer.push(event);
         }
     }
     fn get_sample_rate(&self) -> f32 {
@@ -91,6 +96,11 @@ impl<T: Send + 'static> SoundDriver<T> {
         let device = self.device.take().unwrap();
         let mut generator = self.generator.take().unwrap();
         generator.init(sample_rate);
+
+        // sent pending events
+        for event in self.event_buffer.drain(0..) {
+            generator.handle_event(event);
+        }
 
         let stream_res = match self.format {
             Some(SampleFormat::F32) => build_stream::<f32, T>(&device, &config, generator, rx),
