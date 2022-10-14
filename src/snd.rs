@@ -75,7 +75,7 @@ impl<T: Send + 'static> SoundDriver<T> {
             self.event_buffer.push(event);
         }
     }
-    fn get_sample_rate(&self) -> f32 {
+    pub fn get_sample_rate(&self) -> f32 {
         if let Some(ref config) = self.config {
             config.sample_rate.0 as f32
         } else {

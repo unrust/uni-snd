@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.2] - Unreleased
+### Changed
+- SoundDriver.get_sample_rate() is public
+
 ## [0.2.1] - 2022-10-11
 ### Fixed
 - events sent before calling start() were lost
